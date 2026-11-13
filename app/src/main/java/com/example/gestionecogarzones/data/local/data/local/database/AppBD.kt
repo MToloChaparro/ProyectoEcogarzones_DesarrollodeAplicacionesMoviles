@@ -7,19 +7,22 @@ import androidx.room.RoomDatabase
 import com.example.gestionecogarzones.data.local.dao.IncidenciaDao
 import com.example.gestionecogarzones.data.local.dao.InventarioDao
 import com.example.gestionecogarzones.data.local.dao.SolicitudDao
+import com.example.gestionecogarzones.data.local.dao.UsuarioDao
 import com.example.gestionecogarzones.data.local.entity.IncidenciaEntity
 import com.example.gestionecogarzones.data.local.entity.InventarioEntity
 import com.example.gestionecogarzones.data.local.entity.SolicitudEntity
+import com.example.gestionecogarzones.data.local.entity.UsuarioEntity
 
 @Database(
-    entities = [SolicitudEntity::class, IncidenciaEntity::class, InventarioEntity::class],
-    version = 14,
+    entities = [SolicitudEntity::class, IncidenciaEntity::class, InventarioEntity::class, UsuarioEntity::class],
+    version = 17,
     exportSchema = false
 )
 abstract class AppBD : RoomDatabase() {
     abstract fun solicitudDao(): SolicitudDao
     abstract fun incidenciaDao(): IncidenciaDao
     abstract fun inventarioDao(): InventarioDao
+    abstract fun usuarioDao(): UsuarioDao
 
     companion object {
         @Volatile

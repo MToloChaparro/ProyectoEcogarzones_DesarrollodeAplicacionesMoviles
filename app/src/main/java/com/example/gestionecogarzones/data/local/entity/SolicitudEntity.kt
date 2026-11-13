@@ -12,7 +12,7 @@ data class SolicitudEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val nombreCliente: String,
     val telefono: String,
-    val tipoServicio: String,
+    val tipoServicio: String = "Banquetería",
     val tipoEvento: String,
     val fechaEvento: String,
     val direccion: String,
@@ -29,5 +29,9 @@ data class SolicitudEntity(
     val estado: EstadoEvento = EstadoEvento.PENDIENTE,
     val latitud: Double? = null,
     val longitud: Double? = null,
+    val calificacionEstrellas: Int? = null,
+    val comentarioFeedback: String? = null,
+    val garzonesAsignados: String? = null,
+    val checklistInsumos: String? = null,
     val creadoEn: Long = System.currentTimeMillis()
 )

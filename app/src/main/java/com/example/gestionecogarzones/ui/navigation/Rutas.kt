@@ -7,6 +7,6 @@ sealed class Rutas(val ruta: String) {
     object FormularioCliente : Rutas("formulario_cliente")
     object PanelAdmin : Rutas("panel_admin")
     object ReporteCliente : Rutas("reporte_cliente")
-
     object ConfirmacionExito : Rutas("confirmacion_exito")
+    object Perfil : Rutas("perfil")
 }

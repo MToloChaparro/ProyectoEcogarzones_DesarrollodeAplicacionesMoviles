@@ -17,6 +17,17 @@ class ViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return AdminViewModel(repository) as T
         }
+
+        if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return LoginViewModel(repository) as T
+        }
+
+        if (modelClass.isAssignableFrom(PerfilViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return PerfilViewModel(repository) as T
+        }
+
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

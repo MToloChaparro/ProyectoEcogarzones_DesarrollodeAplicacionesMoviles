@@ -84,6 +84,13 @@ fun PantallaInicio(navController: NavController) {
                     titleContentColor = MaterialTheme.colorScheme.primary
                 ),
                 actions = {
+                    IconButton(onClick = { navController.navigate(Rutas.Perfil.ruta) }) {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = "Mi Perfil",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(onClick = { mostrarDialogoSalir = true }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ExitToApp,

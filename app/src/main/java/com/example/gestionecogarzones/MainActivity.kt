@@ -19,6 +19,7 @@ import com.example.gestionecogarzones.data.repository.SolicitudRepository
 import com.example.gestionecogarzones.ui.navigation.Rutas
 import com.example.gestionecogarzones.ui.screens.LoginScreen
 import com.example.gestionecogarzones.ui.screens.PantallaInicio
+import com.example.gestionecogarzones.ui.screens.PerfilScreen
 import com.example.gestionecogarzones.ui.screens.admin.PanelAdminScreen
 import com.example.gestionecogarzones.ui.screens.cliente.ConfirmacionScreen
 import com.example.gestionecogarzones.ui.screens.cliente.FormularioClienteScreen
@@ -38,13 +39,15 @@ class MainActivity : ComponentActivity() {
         val repository = SolicitudRepository(
             database.solicitudDao(),
             database.incidenciaDao(),
-            database.inventarioDao()
+            database.inventarioDao(),
+            database.usuarioDao()
         )
 
         CoroutineScope(Dispatchers.IO).launch {
             if (repository.contarInventario() == 0) {
                 repository.inicializarInventario()
             }
+            repository.inicializarUsuariosPrueba()
         }
 
         setContent {
@@ -67,11 +70,12 @@ fun AppNavigation(repository: SolicitudRepository) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Rutas.Login.ruta) {
-        composable(Rutas.Login.ruta) { LoginScreen(navController) }
+        composable(Rutas.Login.ruta) { LoginScreen(navController, repository) }
         composable(Rutas.Inicio.ruta) { PantallaInicio(navController) }
         composable(Rutas.FormularioCliente.ruta) { FormularioClienteScreen(navController, repository) }
         composable(Rutas.PanelAdmin.ruta) { PanelAdminScreen(navController, repository) }
         composable(Rutas.ReporteCliente.ruta) { ReporteClienteScreen(navController, repository) }
         composable(Rutas.ConfirmacionExito.ruta) { ConfirmacionScreen(navController) }
+        composable(Rutas.Perfil.ruta) { PerfilScreen(navController, repository) }
     }
 }

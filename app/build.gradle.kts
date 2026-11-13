@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.gestionecogarzones" // Ajustado a tu paquete
+    namespace = "com.example.gestionecogarzones"
     compileSdk = 37
 
     defaultConfig {
@@ -47,8 +47,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
 
     // Navigation & ViewModel
-    implementation("com.google.maps.android:maps-compose:6.1.0") // O la versión más reciente
-    implementation("com.google.android.gms:play-services-maps:19.0.0") // Necesario para el SDK base
+    implementation("com.google.maps.android:maps-compose:6.1.0")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -57,6 +57,10 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    // Retrofit & Gson (Conexión a Microservicios / Spring Boot / Postgres / Cloud AWS)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
