@@ -10,6 +10,7 @@ enum class EstadoEvento {
 @Entity(tableName = "solicitudes")
 data class SolicitudEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val emailCliente: String = "",
     val nombreCliente: String,
     val telefono: String,
     val tipoServicio: String = "Banquetería",

@@ -12,12 +12,21 @@ interface SolicitudDao {
     @Query("SELECT * FROM solicitudes ORDER BY creadoEn DESC")
     fun obtenerTodas(): Flow<List<SolicitudEntity>>
 
+    @Query("SELECT * FROM solicitudes WHERE emailCliente = :email ORDER BY creadoEn DESC")
+    fun obtenerPorEmailCliente(email: String): Flow<List<SolicitudEntity>>
+
     @Query("SELECT * FROM solicitudes WHERE id = :id")
     fun obtenerPorId(id: Long): Flow<SolicitudEntity?>
 
     @Insert
     suspend fun insertar(solicitud: SolicitudEntity): Long
 
+    @Insert
+    suspend fun insertarTodas(solicitudes: List<SolicitudEntity>)
+
     @Update
     suspend fun actualizar(solicitud: SolicitudEntity)
+
+    @Query("SELECT COUNT(*) FROM solicitudes")
+    suspend fun contarSolicitudes(): Int
 }

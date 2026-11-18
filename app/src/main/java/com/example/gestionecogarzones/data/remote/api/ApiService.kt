@@ -1,29 +1,20 @@
 package com.example.gestionecogarzones.data.remote.api
 
-import com.example.gestionecogarzones.data.remote.dto.SolicitudDto
-import com.example.gestionecogarzones.data.remote.dto.UsuarioDto
-import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
+import com.example.gestionecogarzones.data.local.entity.SolicitudEntity
+import com.example.gestionecogarzones.data.local.entity.InventarioEntity
+import com.example.gestionecogarzones.data.local.entity.IncidenciaEntity
+import retrofit2.http.*
 
 interface ApiService {
-    @GET("api/usuarios")
-    suspend fun obtenerUsuarios(): Response<List<UsuarioDto>>
-
-    @POST("api/usuarios/login")
-    suspend fun autenticarUsuario(@Body request: UsuarioDto): Response<UsuarioDto>
-
-    @POST("api/usuarios/registro")
-    suspend fun registrarUsuario(@Body usuario: UsuarioDto): Response<UsuarioDto>
-
     @GET("api/solicitudes")
-    suspend fun obtenerSolicitudes(): Response<List<SolicitudDto>>
+    suspend fun getSolicitudes(): List<SolicitudEntity>
 
     @POST("api/solicitudes")
-    suspend fun crearSolicitud(@Body solicitud: SolicitudDto): Response<SolicitudDto>
+    suspend fun crearSolicitud(@Body solicitud: SolicitudEntity): SolicitudEntity
 
-    @GET("api/solicitudes/{id}")
-    suspend fun obtenerSolicitudPorId(@Path("id") id: Long): Response<SolicitudDto>
+    @GET("api/inventario")
+    suspend fun getInventario(): List<InventarioEntity>
+
+    @GET("api/incidencias")
+    suspend fun getIncidencias(): List<IncidenciaEntity>
 }

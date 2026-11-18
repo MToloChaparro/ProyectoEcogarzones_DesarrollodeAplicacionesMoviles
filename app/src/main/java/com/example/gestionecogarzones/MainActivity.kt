@@ -5,12 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -25,7 +24,6 @@ import com.example.gestionecogarzones.ui.screens.cliente.ConfirmacionScreen
 import com.example.gestionecogarzones.ui.screens.cliente.FormularioClienteScreen
 import com.example.gestionecogarzones.ui.screens.cliente.ReporteClienteScreen
 import com.example.gestionecogarzones.ui.theme.GestionEcogarzonesTheme
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -43,22 +41,21 @@ class MainActivity : ComponentActivity() {
             database.usuarioDao()
         )
 
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             if (repository.contarInventario() == 0) {
                 repository.inicializarInventario()
             }
             repository.inicializarUsuariosPrueba()
+            repository.inicializarSolicitudesPrueba()
         }
 
         setContent {
             GestionEcogarzonesTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Surface(
-                        modifier = Modifier.fillMaxSize().padding(innerPadding),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        AppNavigation(repository)
-                    }
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppNavigation(repository)
                 }
             }
         }

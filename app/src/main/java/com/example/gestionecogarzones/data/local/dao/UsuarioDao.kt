@@ -17,6 +17,9 @@ interface UsuarioDao {
     @Query("SELECT * FROM usuarios WHERE email = :email LIMIT 1")
     fun obtenerPorEmailFlow(email: String): Flow<UsuarioEntity?>
 
+    @Query("SELECT * FROM usuarios ORDER BY nombre ASC")
+    fun obtenerTodos(): Flow<List<UsuarioEntity>>
+
     @Query("SELECT * FROM usuarios WHERE email = :email AND password = :password LIMIT 1")
     suspend fun autenticar(email: String, password: String): UsuarioEntity?
 

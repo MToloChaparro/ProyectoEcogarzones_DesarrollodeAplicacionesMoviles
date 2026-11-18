@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class SolicitudViewModel(
     private val repository: SolicitudRepository
@@ -115,14 +116,16 @@ class SolicitudViewModel(
 
     fun onTelefonoChange(value: String) {
         telefono = value
-        telefonoError = if (value.length < 8 || !value.all { it.isDigit() }) "Teléfono inválido" else null
+        telefonoError = if (value.length < 8 || !value.matches(Regex("^[+\\d\\s-]+$"))) "Teléfono inválido" else null
     }
 
     fun onTipoEventoChange(value: String) { tipoEvento = value }
     fun onTipoInsumosChange(value: String) { tipoInsumos = value }
 
     fun onFechaSeleccionada(millis: Long) {
-        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
         fechaEvento = sdf.format(Date(millis))
         fechaError = null
     }
@@ -235,6 +238,7 @@ class SolicitudViewModel(
                 val stringBarras = barrasSeleccionadas.entries.joinToString(", ") { "${it.value} ${it.key}" }
 
                 val nuevaSolicitud = SolicitudEntity(
+                    emailCliente = repository.emailUsuarioActual,
                     nombreCliente = nombreCliente,
                     telefono = telefono,
                     tipoServicio = tipoServicio,

@@ -97,12 +97,7 @@ class LoginViewModel(
                 val usuario = repository.autenticarUsuario(cleanEmail, cleanPass)
 
                 if (usuario == null) {
-                    val existente = repository.obtenerUsuarioPorEmail(cleanEmail)
-                    if (existente != null) {
-                        errorMessage = "Contraseña incorrecta"
-                    } else {
-                        errorMessage = "El usuario no existe. Regístrate para crear una cuenta."
-                    }
+                    errorMessage = "Correo o contraseña incorrectos"
                     return@launch
                 }
 
@@ -132,8 +127,8 @@ class LoginViewModel(
             return
         }
 
-        if (cleanPass.length < 4) {
-            errorMessage = "La contraseña debe tener al menos 4 caracteres"
+        if (cleanPass.length < 6) {
+            errorMessage = "La contraseña debe tener al menos 6 caracteres"
             return
         }
 
@@ -152,7 +147,8 @@ class LoginViewModel(
                     return@launch
                 }
 
-                val rolCalculado = determinarRolPorEmail(cleanEmail)
+                // El registro público asigna RolUsuario.CLIENTE por seguridad
+                val rolCalculado = RolUsuario.CLIENTE
                 val nuevoUsuario = UsuarioEntity(
                     nombre = cleanNombre,
                     email = cleanEmail,

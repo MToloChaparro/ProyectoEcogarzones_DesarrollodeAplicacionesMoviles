@@ -2,5 +2,4 @@
 <paths>
     <files-path name="fotos_internas" path="." />
     <cache-path name="fotos_cache" path="." />
-    <external-path name="external_files" path="." />
 </paths>

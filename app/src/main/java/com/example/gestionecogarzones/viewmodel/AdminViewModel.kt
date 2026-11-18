@@ -8,6 +8,7 @@ import com.example.gestionecogarzones.data.local.entity.IncidenciaEntity
 import com.example.gestionecogarzones.data.local.entity.InventarioEntity
 import com.example.gestionecogarzones.data.local.entity.SolicitudEntity
 import com.example.gestionecogarzones.data.local.entity.UsuarioEntity
+import com.example.gestionecogarzones.data.remote.api.RetrofitClient
 import com.example.gestionecogarzones.data.repository.SolicitudRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -34,19 +35,36 @@ class AdminViewModel(
     val trabajadores: StateFlow<List<UsuarioEntity>> = repository.todosLosTrabajadores
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val usuarios: StateFlow<List<UsuarioEntity>> = repository.todosLosUsuarios
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val totalEventos = solicitudes.map { it.size }
     val eventosPendientes = solicitudes.map { lista -> lista.count { it.estado == EstadoEvento.PENDIENTE } }
     val totalInvitados = solicitudes.map { lista -> lista.sumOf { it.cantidadInvitados } }
-
     val valorTotalInventario = inventario.map { lista -> lista.sumOf { it.cantidad * it.costoUnidad } }
+
     val eventosActivos = solicitudes.map { lista ->
         lista.count { it.estado == EstadoEvento.CONFIRMADO || it.estado == EstadoEvento.EN_PROCESO }
     }
+
     val incidenciasPendientes = incidencias.map { lista ->
         lista.count { it.estado != EstadoIncidencia.RESUELTA }
     }
+
     val invitadosConfirmados = solicitudes.map { lista ->
         lista.filter { it.estado == EstadoEvento.CONFIRMADO }.sumOf { it.cantidadInvitados }
+    }
+
+    fun probarConexion() {
+        viewModelScope.launch {
+            try {
+                val inventarioRemoto = RetrofitClient.apiService.getInventario()
+                println("CONEXIÓN EXITOSA AL BACKEND: $inventarioRemoto")
+            } catch (e: Exception) {
+                println("ERROR DE CONEXIÓN AL BACKEND: ${e.message}")
+                e.printStackTrace()
+            }
+        }
     }
 
     fun cambiarEstado(solicitud: SolicitudEntity, nuevoEstado: EstadoEvento) {
@@ -73,12 +91,13 @@ class AdminViewModel(
         }
     }
 
-    fun guardarIncidencia(solicitudId: Long, tipo: String, descripcion: String, fotoUri: String? = null) {
+    fun guardarIncidencia(solicitudId: Long, tipo: String, descripcion: String, fotoUri: String? = null, reportadoPor: String? = null) {
         viewModelScope.launch {
             val nuevaIncidencia = IncidenciaEntity(
                 solicitudId = solicitudId,
                 tipo = tipo,
                 descripcion = descripcion,
+                reportadoPor = reportadoPor ?: repository.emailUsuarioActual.ifBlank { "Administrador" },
                 fotoUri = fotoUri
             )
             repository.registrarIncidencia(nuevaIncidencia)
