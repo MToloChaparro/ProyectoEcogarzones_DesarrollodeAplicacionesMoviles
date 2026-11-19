@@ -119,36 +119,47 @@ fun PerfilScreen(
         )
     }
 
-    if (mostrarDialogoFoto) {
+    if (mostrarDialogoFoto && usuario != null) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoFoto = false },
-            title = { Text("Foto de Perfil") },
-            text = { Text("Selecciona el origen para actualizar tu foto de perfil:") },
+            title = { Text("Foto de Perfil", fontWeight = FontWeight.Bold) },
+            text = { Text("Elige una opción para actualizar o remover tu foto:") },
             confirmButton = {
-                TextButton(onClick = {
-                    mostrarDialogoFoto = false
-                    if (hasCameraPermission) {
-                        val photoFile = File.createTempFile("perfil_foto_", ".jpg", context.filesDir)
-                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
-                        fotoTempUri = uri
-                        cameraLauncher.launch(uri)
-                    } else {
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = {
+                        mostrarDialogoFoto = false
+                        if (hasCameraPermission) {
+                            val photoFile = File.createTempFile("perfil_foto_", ".jpg", context.filesDir)
+                            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
+                            fotoTempUri = uri
+                            cameraLauncher.launch(uri)
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Cámara")
                     }
-                }) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Cámara")
+
+                    TextButton(onClick = {
+                        mostrarDialogoFoto = false
+                        galeriaLauncher.launch("image/*")
+                    }) {
+                        Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Galería")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    mostrarDialogoFoto = false
-                    galeriaLauncher.launch("image/*")
-                }) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Galería")
+                if (!usuario.fotoUri.isNullOrBlank()) {
+                    TextButton(onClick = {
+                        mostrarDialogoFoto = false
+                        viewModel.actualizarFoto("")
+                    }) {
+                        Text("Quitar Foto", color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         )
@@ -283,17 +294,39 @@ fun PerfilScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         FilaDatoPerfil(icono = Icons.Default.Home, titulo = "Dirección", valor = usuario.direccion ?: "No especificada")
 
-                        if (usuario.rol != RolUsuario.CLIENTE) {
+                        if (!usuario.rut.isNullOrBlank()) {
                             Spacer(modifier = Modifier.height(12.dp))
-                            FilaDatoPerfil(icono = Icons.Default.Badge, titulo = "Cargo / Especialidad", valor = usuario.cargoEspecialidad ?: "Personal de Servicio")
+                            FilaDatoPerfil(icono = Icons.Default.Badge, titulo = "RUT / Identificación", valor = usuario.rut!!)
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Sección por Rol
+                // Ficha Extendida por Rol
                 if (usuario.rol == RolUsuario.CLIENTE) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "Preferencias y Facturación",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                            FilaDatoPerfil(icono = Icons.Default.CreditCard, titulo = "Método de Pago Preferido", valor = usuario.metodoPagoPreferido ?: "No especificado")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            FilaDatoPerfil(icono = Icons.Default.Notes, titulo = "Preferencias para Eventos", valor = usuario.notasPreferencia ?: "Sin observaciones registradas")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
@@ -330,7 +363,35 @@ fun PerfilScreen(
                             }
                         }
                     }
-                } else {
+                } else if (usuario.rol == RolUsuario.TRABAJADOR) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "Ficha Operativa de Personal",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                            FilaDatoPerfil(icono = Icons.Default.Work, titulo = "Especialidad / Cargo", valor = usuario.cargoEspecialidad ?: "Personal de Servicio")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            FilaDatoPerfil(icono = Icons.Default.Schedule, titulo = "Disponibilidad de Turnos", valor = usuario.disponibilidadTurno ?: "Fines de semana y eventos")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            FilaDatoPerfil(icono = Icons.Default.Checkroom, titulo = "Talla de Uniforme", valor = usuario.tallaUniforme ?: "No especificada")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            FilaDatoPerfil(icono = Icons.Default.MedicalServices, titulo = "Carnet Manipulante / Salud", valor = usuario.carnetManipulador ?: "Al día")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            FilaDatoPerfil(icono = Icons.Default.ContactPhone, titulo = "Contacto de Emergencia", valor = usuario.contactoEmergencia ?: "No registrado")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
@@ -348,7 +409,7 @@ fun PerfilScreen(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Acceso activo a la plataforma de administración de inventarios, eventos e incidencias.",
+                                text = "Acceso activo a la plataforma de administración de inventarios, eventos e incidencias asignadas.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -407,13 +468,79 @@ private fun DialogEditarPerfil(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
-                if (usuario.rol != RolUsuario.CLIENTE) {
+
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = viewModel.rutEdit,
+                    onValueChange = viewModel::onRutChange,
+                    label = { Text("RUT / Identificación") },
+                    placeholder = { Text("12.345.678-9") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                if (usuario.rol == RolUsuario.CLIENTE) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = viewModel.metodoPagoEdit,
+                        onValueChange = viewModel::onMetodoPagoChange,
+                        label = { Text("Método de Pago Preferido") },
+                        placeholder = { Text("Transferencia / Tarjeta / Factura") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = viewModel.notasPreferenciaEdit,
+                        onValueChange = viewModel::onNotasPreferenciaChange,
+                        label = { Text("Notas de Preferencia") },
+                        placeholder = { Text("Preferencias de menús, protocolo, etc.") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                } else if (usuario.rol == RolUsuario.TRABAJADOR) {
                     Spacer(modifier = Modifier.height(10.dp))
                     OutlinedTextField(
                         value = viewModel.cargoEspecialidadEdit,
                         onValueChange = viewModel::onCargoChange,
                         label = { Text("Cargo / Especialidad") },
-                        placeholder = { Text("Capitán de Garzones") },
+                        placeholder = { Text("Garzón Principal / Bartender") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = viewModel.disponibilidadTurnoEdit,
+                        onValueChange = viewModel::onDisponibilidadTurnoChange,
+                        label = { Text("Disponibilidad de Turnos") },
+                        placeholder = { Text("Fines de semana / Noches") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = viewModel.tallaUniformeEdit,
+                        onValueChange = viewModel::onTallaUniformeChange,
+                        label = { Text("Talla de Uniforme") },
+                        placeholder = { Text("M, L, XL") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = viewModel.contactoEmergenciaEdit,
+                        onValueChange = viewModel::onContactoEmergenciaChange,
+                        label = { Text("Contacto de Emergencia") },
+                        placeholder = { Text("Nombre y Teléfono") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = viewModel.carnetManipuladorEdit,
+                        onValueChange = viewModel::onCarnetManipuladorChange,
+                        label = { Text("Carnet de Manipulante / Salud") },
+                        placeholder = { Text("Vigente hasta 2027 / Al día") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )

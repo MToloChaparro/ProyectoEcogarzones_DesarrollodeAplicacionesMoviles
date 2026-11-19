@@ -34,5 +34,7 @@ data class SolicitudEntity(
     val comentarioFeedback: String? = null,
     val garzonesAsignados: String? = null,
     val checklistInsumos: String? = null,
+    val documentoCronogramaUri: String? = null,
+    val documentoCronogramaNombre: String? = null,
     val creadoEn: Long = System.currentTimeMillis()
 )

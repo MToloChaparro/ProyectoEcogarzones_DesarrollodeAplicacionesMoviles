@@ -15,7 +15,7 @@ import com.example.gestionecogarzones.data.local.entity.UsuarioEntity
 
 @Database(
     entities = [SolicitudEntity::class, IncidenciaEntity::class, InventarioEntity::class, UsuarioEntity::class],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 abstract class AppBD : RoomDatabase() {

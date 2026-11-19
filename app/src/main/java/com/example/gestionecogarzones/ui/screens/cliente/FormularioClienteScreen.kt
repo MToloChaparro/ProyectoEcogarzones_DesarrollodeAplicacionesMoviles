@@ -1,5 +1,8 @@
 package com.example.gestionecogarzones.ui.screens.cliente
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,6 +26,7 @@ import androidx.navigation.NavController
 import com.example.gestionecogarzones.data.repository.SolicitudRepository
 import com.example.gestionecogarzones.ui.components.CampoTextoValidado
 import com.example.gestionecogarzones.ui.navigation.Rutas
+import com.example.gestionecogarzones.utils.FileUtils
 import com.example.gestionecogarzones.viewmodel.SolicitudViewModel
 import com.example.gestionecogarzones.viewmodel.ViewModelFactory
 
@@ -75,6 +80,16 @@ fun FormularioClienteScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaFormulario(viewModel: SolicitudViewModel, onSiguiente: () -> Unit) {
+    val context = LocalContext.current
+    val documentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val res = FileUtils.copiarDocumentoAArchivosInternos(context, uri)
+            if (res != null) {
+                viewModel.onDocumentoSeleccionado(res.first.toString(), res.second)
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -83,8 +98,8 @@ fun PantallaFormulario(viewModel: SolicitudViewModel, onSiguiente: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("1. Datos de Contacto", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        CampoTextoValidado(valor = viewModel.nombreCliente, onValorCambia = viewModel::onNombreChange, etiqueta = "Nombre completo", icono = Icons.Default.Person, mensajeError = viewModel.nombreError)
-        CampoTextoValidado(valor = viewModel.telefono, onValorCambia = viewModel::onTelefonoChange, etiqueta = "Teléfono", icono = Icons.Default.Phone, mensajeError = viewModel.telefonoError, esNumero = true)
+        CampoTextoValidado(valor = viewModel.nombreCliente, onValorCambia = viewModel::onNombreChange, etiqueta = "Nombre del cliente / titular", icono = Icons.Default.Person, mensajeError = viewModel.nombreError)
+        CampoTextoValidado(valor = viewModel.telefono, onValorCambia = viewModel::onTelefonoChange, etiqueta = "Teléfono de contacto", icono = Icons.Default.Phone, mensajeError = viewModel.telefonoError, esNumero = true)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -116,7 +131,7 @@ fun PantallaFormulario(viewModel: SolicitudViewModel, onSiguiente: () -> Unit) {
             }
         }
 
-        CampoTextoValidado(valor = viewModel.tipoEvento, onValorCambia = viewModel::onTipoEventoChange, etiqueta = "Tipo de evento (Boda, etc.)", icono = Icons.Default.Celebration)
+        CampoTextoValidado(valor = viewModel.tipoEvento, onValorCambia = viewModel::onTipoEventoChange, etiqueta = "Nombre / Título del evento (Ej. Matrimonio Civil)", icono = Icons.Default.Celebration)
 
         var mostrarCalendario by remember { mutableStateOf(false) }
 
@@ -216,7 +231,7 @@ fun PantallaFormulario(viewModel: SolicitudViewModel, onSiguiente: () -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("4. Logística y Términos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text("4. Logística, Cronograma y Términos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
 
         var expandirInsumos by remember { mutableStateOf(false) }
         val opcionesInsumos = listOf("Ecogarzones provee todo", "Yo llevo solo vajilla", "Yo llevo solo ingredientes", "Yo llevo insumos completos")
@@ -234,6 +249,43 @@ fun PantallaFormulario(viewModel: SolicitudViewModel, onSiguiente: () -> Unit) {
                 opcionesInsumos.forEach { opcion ->
                     DropdownMenuItem(text = { Text(opcion) }, onClick = { viewModel.onTipoInsumosChange(opcion); expandirInsumos = false })
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Adjuntar Cronograma (PDF/Word)
+        Text("Cronograma del Evento (Opcional - PDF/Word)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (!viewModel.documentoCronogramaNombre.isNullOrBlank()) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Default.Description, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(viewModel.documentoCronogramaNombre!!, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    }
+                    IconButton(onClick = { viewModel.removerDocumento() }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+        } else {
+            OutlinedButton(
+                onClick = { documentLauncher.launch("*/*") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.UploadFile, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Adjuntar Cronograma (PDF / Word)")
             }
         }
 
@@ -274,6 +326,9 @@ fun PantallaResumen(viewModel: SolicitudViewModel, onEditar: () -> Unit, onConfi
                 FilaResumen("Fecha", viewModel.fechaEvento)
                 FilaResumen("Dirección", viewModel.direccion)
                 FilaResumen("Invitados", viewModel.cantidadInvitados)
+                if (!viewModel.documentoCronogramaNombre.isNullOrBlank()) {
+                    FilaResumen("Cronograma", viewModel.documentoCronogramaNombre!!)
+                }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 

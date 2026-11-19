@@ -70,6 +70,11 @@ class SolicitudViewModel(
     var tipoInsumos by mutableStateOf("")
         private set
 
+    var documentoCronogramaUri by mutableStateOf<String?>(null)
+        private set
+    var documentoCronogramaNombre by mutableStateOf<String?>(null)
+        private set
+
     var nombreError by mutableStateOf<String?>(null)
         private set
     var telefonoError by mutableStateOf<String?>(null)
@@ -109,6 +114,24 @@ class SolicitudViewModel(
 
     val fechaMinima: Long = System.currentTimeMillis() + (15L * 24 * 60 * 60 * 1000)
 
+    init {
+        viewModelScope.launch {
+            val email = repository.emailUsuarioActual
+            if (email.isNotBlank()) {
+                val u = repository.obtenerUsuarioPorEmail(email)
+                if (u != null) {
+                    nombreCliente = u.nombre
+                    if (!u.telefono.isNullOrBlank()) {
+                        telefono = u.telefono
+                    }
+                    if (!u.direccion.isNullOrBlank()) {
+                        direccion = u.direccion
+                    }
+                }
+            }
+        }
+    }
+
     fun onNombreChange(value: String) {
         nombreCliente = value
         nombreError = if (value.length < 3) "El nombre debe tener al menos 3 letras" else null
@@ -121,6 +144,16 @@ class SolicitudViewModel(
 
     fun onTipoEventoChange(value: String) { tipoEvento = value }
     fun onTipoInsumosChange(value: String) { tipoInsumos = value }
+
+    fun onDocumentoSeleccionado(uri: String, nombre: String) {
+        documentoCronogramaUri = uri
+        documentoCronogramaNombre = nombre
+    }
+
+    fun removerDocumento() {
+        documentoCronogramaUri = null
+        documentoCronogramaNombre = null
+    }
 
     fun onFechaSeleccionada(millis: Long) {
         val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
@@ -254,7 +287,9 @@ class SolicitudViewModel(
                     menusSolicitados = if (stringMenus.isBlank()) "Sin menús" else stringMenus,
                     barrasSolicitadas = if (stringBarras.isBlank()) "Sin barras" else stringBarras,
                     detalleInsumos = tipoInsumos,
-                    aceptaTerminos = aceptaTerminos
+                    aceptaTerminos = aceptaTerminos,
+                    documentoCronogramaUri = documentoCronogramaUri,
+                    documentoCronogramaNombre = documentoCronogramaNombre
                 )
                 repository.crearSolicitud(nuevaSolicitud)
                 onSuccess()

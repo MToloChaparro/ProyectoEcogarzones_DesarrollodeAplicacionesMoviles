@@ -570,6 +570,15 @@ fun TarjetaSolicitud(solicitud: SolicitudEntity, viewModel: AdminViewModel) {
     val galeriaLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) { fotoAdjuntaUri = uri; mostrarDialogoIncidencia = true }
     }
+    val documentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val res = com.example.gestionecogarzones.utils.FileUtils.copiarDocumentoAArchivosInternos(context, uri)
+            if (res != null) {
+                viewModel.adjuntarDocumentoASolicitud(solicitud, res.first.toString(), res.second)
+                Toast.makeText(context, "Cronograma adjuntado al evento", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val (colorEstado, iconoEstado) = when (solicitud.estado) {
         EstadoEvento.PENDIENTE -> Color(0xFFFFA500) to Icons.Default.HourglassEmpty
@@ -802,6 +811,36 @@ fun TarjetaSolicitud(solicitud: SolicitudEntity, viewModel: AdminViewModel) {
                 }
             }
 
+            if (!solicitud.documentoCronogramaUri.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            com.example.gestionecogarzones.utils.FileUtils.abrirDocumento(context, solicitud.documentoCronogramaUri)
+                        }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(Icons.Default.Description, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Cronograma: ${solicitud.documentoCronogramaNombre ?: "Documento PDF/Word"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Icon(Icons.Default.OpenInNew, contentDescription = "Abrir", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
             Box(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp)).padding(12.dp)) {
@@ -834,6 +873,16 @@ fun TarjetaSolicitud(solicitud: SolicitudEntity, viewModel: AdminViewModel) {
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Incidencia", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
+                    }
+
+                    OutlinedButton(
+                        onClick = { documentLauncher.launch("*/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Adjuntar Cronograma (PDF / Word)", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

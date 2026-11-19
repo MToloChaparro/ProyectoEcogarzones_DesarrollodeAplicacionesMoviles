@@ -33,6 +33,20 @@ class PerfilViewModel(
         private set
     var cargoEspecialidadEdit by mutableStateOf("")
         private set
+    var rutEdit by mutableStateOf("")
+        private set
+    var metodoPagoEdit by mutableStateOf("")
+        private set
+    var notasPreferenciaEdit by mutableStateOf("")
+        private set
+    var disponibilidadTurnoEdit by mutableStateOf("")
+        private set
+    var tallaUniformeEdit by mutableStateOf("")
+        private set
+    var contactoEmergenciaEdit by mutableStateOf("")
+        private set
+    var carnetManipuladorEdit by mutableStateOf("")
+        private set
 
     var isSaving by mutableStateOf(false)
         private set
@@ -44,6 +58,13 @@ class PerfilViewModel(
         telefonoEdit = usuario.telefono ?: ""
         direccionEdit = usuario.direccion ?: ""
         cargoEspecialidadEdit = usuario.cargoEspecialidad ?: ""
+        rutEdit = usuario.rut ?: ""
+        metodoPagoEdit = usuario.metodoPagoPreferido ?: ""
+        notasPreferenciaEdit = usuario.notasPreferencia ?: ""
+        disponibilidadTurnoEdit = usuario.disponibilidadTurno ?: ""
+        tallaUniformeEdit = usuario.tallaUniforme ?: ""
+        contactoEmergenciaEdit = usuario.contactoEmergencia ?: ""
+        carnetManipuladorEdit = usuario.carnetManipulador ?: ""
         isEditing = true
         mensajeExito = null
     }
@@ -56,6 +77,13 @@ class PerfilViewModel(
     fun onTelefonoChange(value: String) { telefonoEdit = value }
     fun onDireccionChange(value: String) { direccionEdit = value }
     fun onCargoChange(value: String) { cargoEspecialidadEdit = value }
+    fun onRutChange(value: String) { rutEdit = value }
+    fun onMetodoPagoChange(value: String) { metodoPagoEdit = value }
+    fun onNotasPreferenciaChange(value: String) { notasPreferenciaEdit = value }
+    fun onDisponibilidadTurnoChange(value: String) { disponibilidadTurnoEdit = value }
+    fun onTallaUniformeChange(value: String) { tallaUniformeEdit = value }
+    fun onContactoEmergenciaChange(value: String) { contactoEmergenciaEdit = value }
+    fun onCarnetManipuladorChange(value: String) { carnetManipuladorEdit = value }
 
     fun actualizarFoto(fotoUri: String) {
         val u = usuarioActual.value ?: return
@@ -76,7 +104,14 @@ class PerfilViewModel(
                     nombre = nombreEdit.trim(),
                     telefono = telefonoEdit.trim().ifBlank { null },
                     direccion = direccionEdit.trim().ifBlank { null },
-                    cargoEspecialidad = cargoEspecialidadEdit.trim().ifBlank { null }
+                    cargoEspecialidad = cargoEspecialidadEdit.trim().ifBlank { null },
+                    rut = rutEdit.trim().ifBlank { null },
+                    metodoPagoPreferido = metodoPagoEdit.trim().ifBlank { null },
+                    notasPreferencia = notasPreferenciaEdit.trim().ifBlank { null },
+                    disponibilidadTurno = disponibilidadTurnoEdit.trim().ifBlank { null },
+                    tallaUniforme = tallaUniformeEdit.trim().ifBlank { null },
+                    contactoEmergencia = contactoEmergenciaEdit.trim().ifBlank { null },
+                    carnetManipulador = carnetManipuladorEdit.trim().ifBlank { null }
                 )
                 repository.actualizarUsuario(usuarioActualizado)
                 isEditing = false

@@ -142,4 +142,15 @@ class AdminViewModel(
             repository.agregarInventario(nuevoItem)
         }
     }
+
+    fun adjuntarDocumentoASolicitud(solicitud: SolicitudEntity, uri: String, nombre: String) {
+        viewModelScope.launch {
+            repository.actualizarSolicitud(
+                solicitud.copy(
+                    documentoCronogramaUri = uri,
+                    documentoCronogramaNombre = nombre
+                )
+            )
+        }
+    }
 }

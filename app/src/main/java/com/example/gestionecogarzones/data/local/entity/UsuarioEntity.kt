@@ -20,5 +20,12 @@ data class UsuarioEntity(
     val fotoUri: String? = null,
     val telefono: String? = null,
     val direccion: String? = null,
-    val cargoEspecialidad: String? = null
+    val cargoEspecialidad: String? = null,
+    val rut: String? = null,
+    val metodoPagoPreferido: String? = null,
+    val notasPreferencia: String? = null,
+    val disponibilidadTurno: String? = null,
+    val tallaUniforme: String? = null,
+    val contactoEmergencia: String? = null,
+    val carnetManipulador: String? = null
 )
