@@ -2,6 +2,11 @@ package com.example.gestionecogarzones.utils
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
@@ -17,6 +22,45 @@ object FileUtils {
                 inputStream.copyTo(output)
             }
             Uri.fromFile(file)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun recortarYAjustarBitmap(
+        context: Context,
+        uri: Uri,
+        zoomScale: Float,
+        offsetX: Float,
+        offsetY: Float
+    ): Uri? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val originalBitmap = BitmapFactory.decodeStream(inputStream) ?: return null
+
+            val targetSize = 512
+            val outputBitmap = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(outputBitmap)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            val matrix = Matrix()
+
+            val baseScale = Math.max(targetSize.toFloat() / originalBitmap.width, targetSize.toFloat() / originalBitmap.height)
+            val finalScale = baseScale * zoomScale
+
+            val dx = (targetSize - originalBitmap.width * finalScale) / 2f + (offsetX * targetSize / 250f)
+            val dy = (targetSize - originalBitmap.height * finalScale) / 2f + (offsetY * targetSize / 250f)
+
+            matrix.postScale(finalScale, finalScale)
+            matrix.postTranslate(dx, dy)
+
+            canvas.drawBitmap(originalBitmap, matrix, paint)
+
+            val croppedFile = File(context.filesDir, "perfil_cropped_${System.currentTimeMillis()}.jpg")
+            croppedFile.outputStream().use { out ->
+                outputBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            }
+            Uri.fromFile(croppedFile)
         } catch (e: Exception) {
             e.printStackTrace()
             null

@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,7 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +61,7 @@ fun PerfilScreen(
     var mostrarDialogoFoto by remember { mutableStateOf(false) }
     var mostrarDialogoSalir by remember { mutableStateOf(false) }
     var fotoTempUri by remember { mutableStateOf<Uri?>(null) }
+    var fotoAJustarUri by remember { mutableStateOf<Uri?>(null) }
 
     val solicitudesCliente by repository.obtenerSolicitudesPorClienteFlow(usuarioState?.email ?: "").collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -67,7 +71,7 @@ fun PerfilScreen(
 
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && fotoTempUri != null) {
-            viewModel.actualizarFoto(fotoTempUri.toString())
+            fotoAJustarUri = fotoTempUri
         }
     }
 
@@ -85,7 +89,7 @@ fun PerfilScreen(
         if (uri != null) {
             val copiaUri = FileUtils.copiarUriAArchivosInternos(context, uri, "perfil_foto")
             if (copiaUri != null) {
-                viewModel.actualizarFoto(copiaUri.toString())
+                fotoAJustarUri = copiaUri
             }
         }
     }
@@ -115,6 +119,17 @@ fun PerfilScreen(
             },
             dismissButton = {
                 TextButton(onClick = { mostrarDialogoSalir = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    if (fotoAJustarUri != null) {
+        DialogoAjustarFoto(
+            uri = fotoAJustarUri!!,
+            onDismiss = { fotoAJustarUri = null },
+            onGuardar = { croppedUri ->
+                viewModel.actualizarFoto(croppedUri.toString())
+                fotoAJustarUri = null
             }
         )
     }
@@ -296,7 +311,7 @@ fun PerfilScreen(
 
                         if (!usuario.rut.isNullOrBlank()) {
                             Spacer(modifier = Modifier.height(12.dp))
-                            FilaDatoPerfil(icono = Icons.Default.Badge, titulo = "RUT / Identificación", valor = usuario.rut!!)
+                            FilaDatoPerfil(icono = Icons.Default.Badge, titulo = "RUT / Identificación", valor = usuario.rut)
                         }
                     }
                 }
@@ -321,7 +336,7 @@ fun PerfilScreen(
 
                             FilaDatoPerfil(icono = Icons.Default.CreditCard, titulo = "Método de Pago Preferido", valor = usuario.metodoPagoPreferido ?: "No especificado")
                             Spacer(modifier = Modifier.height(12.dp))
-                            FilaDatoPerfil(icono = Icons.Default.Notes, titulo = "Preferencias para Eventos", valor = usuario.notasPreferencia ?: "Sin observaciones registradas")
+                            FilaDatoPerfil(icono = Icons.Default.Description, titulo = "Preferencias para Eventos", valor = usuario.notasPreferencia ?: "Sin observaciones registradas")
                         }
                     }
 
@@ -431,6 +446,117 @@ fun PerfilScreen(
             }
         }
     }
+}
+
+@Composable
+private fun DialogoAjustarFoto(
+    uri: Uri,
+    onDismiss: () -> Unit,
+    onGuardar: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    var zoomScale by remember { mutableFloatStateOf(1.0f) }
+    var offsetX by remember { mutableFloatStateOf(0f) }
+    var offsetY by remember { mutableFloatStateOf(0f) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Ajustar Foto de Perfil", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Arrastra la imagen o ajusta el zoom para encuadrar tu foto:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black)
+                        .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                zoomScale = (zoomScale * zoom).coerceIn(1.0f, 3.5f)
+                                offsetX += pan.x / 2.5f
+                                offsetY += pan.y / 2.5f
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(uri)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Previsualización",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = zoomScale,
+                                scaleY = zoomScale,
+                                translationX = offsetX,
+                                translationY = offsetY
+                            ),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.ZoomOut, contentDescription = "Alejar", tint = MaterialTheme.colorScheme.primary)
+                    Slider(
+                        value = zoomScale,
+                        onValueChange = { zoomScale = it },
+                        valueRange = 1.0f..3.5f,
+                        modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+                    )
+                    Icon(Icons.Default.ZoomIn, contentDescription = "Acercar", tint = MaterialTheme.colorScheme.primary)
+                }
+
+                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = { offsetX = 0f; offsetY = 0f; zoomScale = 1.0f }) {
+                        Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Centrar Foto")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val croppedUri = FileUtils.recortarYAjustarBitmap(context, uri, zoomScale, offsetX, offsetY)
+                    if (croppedUri != null) {
+                        onGuardar(croppedUri)
+                    } else {
+                        Toast.makeText(context, "Error al procesar la foto", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Guardar Encuadre")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable
